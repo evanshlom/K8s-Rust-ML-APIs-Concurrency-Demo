@@ -1,5 +1,4 @@
 #!/bin/bash
-# scripts/setup.sh
 set -e
 
 echo "Setting up KIND cluster for ML deployment..."

@@ -1,5 +1,4 @@
 #!/bin/bash
-# scripts/cleanup.sh
 set -e
 
 echo "Cleaning up..."

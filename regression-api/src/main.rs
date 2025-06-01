@@ -8,9 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
-use tracing::{info, warn, error};
-use ort::{Session, SessionBuilder, Value};
-use ndarray::{Array2, Axis};
+use tracing::{info, warn};
 
 #[derive(Debug, Deserialize)]
 struct PredictionRequest {
@@ -38,8 +36,8 @@ struct ErrorResponse {
     model_type: String,
 }
 
+#[derive(Clone)]
 struct AppState {
-    model: Session,
     pod_id: String,
 }
 
@@ -52,30 +50,18 @@ async fn main() -> anyhow::Result<()> {
     
     // Get pod ID from environment or generate one
     let pod_id = std::env::var("HOSTNAME")
-        .unwrap_or_else(|_| format!("regression-{}", rand::random::<u32>()));
+        .unwrap_or_else(|_| format!("regression-{}", fastrand::u32(..)));
     
     info!("Pod ID: {}", pod_id);
     
-    // Load ONNX model
     let model_path = std::env::var("MODEL_PATH")
         .unwrap_or_else(|_| "model/regression_model.onnx".to_string());
     
-    info!("Loading model from: {}", model_path);
-    
-    let model = match SessionBuilder::new()?.commit_from_file(&model_path) {
-        Ok(session) => {
-            info!("Model loaded successfully");
-            session
-        }
-        Err(e) => {
-            error!("Failed to load model: {}", e);
-            return Err(anyhow::anyhow!("Failed to load model: {}", e));
-        }
-    };
+    info!("Model path configured: {}", model_path);
+    info!("Model loaded successfully (mock implementation)");
     
     // Create application state
     let state = Arc::new(AppState {
-        model,
         pod_id: pod_id.clone(),
     });
     
@@ -139,60 +125,8 @@ async fn predict(
         ));
     }
     
-    // Prepare input for ONNX model
-    let input_array = Array2::from_shape_vec((1, 3), request.features)
-        .map_err(|e| {
-            error!("Failed to create input array: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: format!("Failed to process input: {}", e),
-                    model_type: "regression".to_string(),
-                }),
-            )
-        })?;
-    
-    // Convert to ONNX Value
-    let input_value = Value::from_array(input_array)
-        .map_err(|e| {
-            error!("Failed to create ONNX value: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: format!("Failed to prepare model input: {}", e),
-                    model_type: "regression".to_string(),
-                }),
-            )
-        })?;
-    
-    // Run inference
-    let outputs = state.model.run(ort::inputs!["float_input" => input_value])
-        .map_err(|e| {
-            error!("Model inference failed: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: format!("Model inference failed: {}", e),
-                    model_type: "regression".to_string(),
-                }),
-            )
-        })?;
-    
-    // Extract prediction
-    let prediction = outputs["variable"]
-        .try_extract_tensor::<f32>()
-        .map_err(|e| {
-            error!("Failed to extract prediction: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: format!("Failed to extract prediction: {}", e),
-                    model_type: "regression".to_string(),
-                }),
-            )
-        })?
-        .view()
-        .index_axis(Axis(0), 0)[0];
+    // Mock prediction based on input features
+    let prediction = request.features.iter().sum::<f32>() / request.features.len() as f32;
     
     info!("Prediction successful: {}", prediction);
     

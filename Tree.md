@@ -2,8 +2,7 @@
 
 ml-k8s-deployment/
 ├── README.md
-├── Makefile
-├── docker-compose.yml
+├── justfile
 ├── .gitignore
 ├── models/
 │   ├── train_models.py
@@ -27,7 +26,6 @@ ml-k8s-deployment/
 │       └── classification_model.onnx (symlink)
 ├── k8s/
 │   ├── namespace.yaml
-│   ├── configmap.yaml
 │   ├── regression-deployment.yaml
 │   ├── regression-service.yaml
 │   ├── classification-deployment.yaml

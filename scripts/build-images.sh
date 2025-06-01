@@ -1,20 +1,15 @@
 #!/bin/bash
-# scripts/build-images.sh
 set -e
 
 echo "Building Docker images..."
 
 # Build regression API
 echo "Building regression-api..."
-cd regression-api
-docker build -t regression-api:latest .
-cd ..
+docker build -f regression-api/Dockerfile -t regression-api:latest .
 
 # Build classification API
 echo "Building classification-api..."
-cd classification-api
-docker build -t classification-api:latest .
-cd ..
+docker build -f classification-api/Dockerfile -t classification-api:latest .
 
 # Load images into KIND cluster
 echo "Loading images into KIND cluster..."

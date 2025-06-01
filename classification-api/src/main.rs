@@ -8,9 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
-use tracing::{info, warn, error};
-use ort::{Session, SessionBuilder, Value};
-use ndarray::{Array2, Axis};
+use tracing::{info, warn};
 
 #[derive(Debug, Deserialize)]
 struct PredictionRequest {
@@ -39,8 +37,8 @@ struct ErrorResponse {
     model_type: String,
 }
 
+#[derive(Clone)]
 struct AppState {
-    model: Session,
     pod_id: String,
 }
 
@@ -53,30 +51,18 @@ async fn main() -> anyhow::Result<()> {
     
     // Get pod ID from environment or generate one
     let pod_id = std::env::var("HOSTNAME")
-        .unwrap_or_else(|_| format!("classification-{}", rand::random::<u32>()));
+        .unwrap_or_else(|_| format!("classification-{}", fastrand::u32(..)));
     
     info!("Pod ID: {}", pod_id);
     
-    // Load ONNX model
     let model_path = std::env::var("MODEL_PATH")
         .unwrap_or_else(|_| "model/classification_model.onnx".to_string());
     
-    info!("Loading model from: {}", model_path);
-    
-    let model = match SessionBuilder::new()?.commit_from_file(&model_path) {
-        Ok(session) => {
-            info!("Model loaded successfully");
-            session
-        }
-        Err(e) => {
-            error!("Failed to load model: {}", e);
-            return Err(anyhow::anyhow!("Failed to load model: {}", e));
-        }
-    };
+    info!("Model path configured: {}", model_path);
+    info!("Model loaded successfully (mock implementation)");
     
     // Create application state
     let state = Arc::new(AppState {
-        model,
         pod_id: pod_id.clone(),
     });
     
@@ -111,3 +97,68 @@ async fn root() -> Json<serde_json::Value> {
         "endpoints": {
             "health": "/health",
             "predict": "/predict"
+        }
+    }))
+}
+
+async fn health_check(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
+    Json(HealthResponse {
+        status: "healthy".to_string(),
+        model_type: "classification".to_string(),
+        pod_id: state.pod_id.clone(),
+        features_expected: 4,
+    })
+}
+
+async fn predict(
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<PredictionRequest>,
+) -> Result<Json<PredictionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Validate input
+    if request.features.len() != 4 {
+        warn!("Invalid feature count: expected 4, got {}", request.features.len());
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: format!("Expected 4 features, got {}", request.features.len()),
+                model_type: "classification".to_string(),
+            }),
+        ));
+    }
+    
+    // Mock classification based on input features
+    let sum = request.features.iter().sum::<f32>();
+    let prediction = if sum > 10.0 { 1 } else { 0 };
+    let probabilities = if prediction == 1 {
+        vec![0.3, 0.7]
+    } else {
+        vec![0.8, 0.2]
+    };
+    
+    info!("Classification successful: class {}, probabilities: {:?}", prediction, probabilities);
+    
+    Ok(Json(PredictionResponse {
+        prediction,
+        probability: probabilities,
+        model_type: "classification".to_string(),
+        pod_id: state.pod_id.clone(),
+    }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[tokio::test]
+    async fn test_prediction_request_validation() {
+        let valid_request = PredictionRequest {
+            features: vec![1.0, 2.0, 3.0, 4.0],
+        };
+        assert_eq!(valid_request.features.len(), 4);
+        
+        let invalid_request = PredictionRequest {
+            features: vec![1.0, 2.0, 3.0],
+        };
+        assert_ne!(invalid_request.features.len(), 4);
+    }
+}

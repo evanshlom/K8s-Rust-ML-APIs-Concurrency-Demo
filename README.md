@@ -14,25 +14,39 @@ Both APIs are exposed using **NodePort** services, making them accessible via **
 - Python 3.8+
 - Rust 1.70+
 - kubectl
+- just (task runner)
 
 ## Quick Start
 
 ```bash
+# Install just
+winget install Casey.Just
+
 # 1. Train the models
-make train-models
+just train-models
 
 # 2. Build Docker images
-make build-images
+just build-images
 
 # 3. Setup KIND cluster and deploy
-make setup-cluster
-make deploy
+just setup-cluster
+just deploy
 
 # 4. Test the deployment
-make test
+just test
 
 # 5. Cleanup
-make cleanup
+just cleanup
+```
+
+## Complete Demo Workflow
+
+```bash
+# All-in-one demo setup
+just demo
+
+# Then test
+just test
 ```
 
 ## Manual Setup
@@ -67,7 +81,7 @@ python train_models.py
 
 ```bash
 # Test concurrent inference
-python scripts/test-concurrent.py
+./tests/test_apis.sh
 
 # Or test individually
 curl -X POST http://localhost:30001/predict \
@@ -100,12 +114,10 @@ curl -X POST http://localhost:30002/predict \
 
 ```bash
 # Run regression API locally
-cd regression-api
-cargo run
+just dev-regression
 
-# Run classification API locally
-cd classification-api
-cargo run
+# Run classification API locally  
+just dev-classification
 ```
 
 ## Troubleshooting
@@ -114,6 +126,11 @@ cargo run
 ```bash
 kubectl get pods -n ml-apis
 kubectl logs -n ml-apis <pod-name>
+
+# Or use just commands
+just logs-regression
+just logs-classification
+just status
 ```
 
 ### Check services

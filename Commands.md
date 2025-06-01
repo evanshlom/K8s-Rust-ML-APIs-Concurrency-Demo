@@ -1,12 +1,17 @@
-# 1. Train the models
-make train-models
+# Install just
+choco install just
 
-# 2. Build Docker images and setup KIND cluster
-make build-images
-make setup-cluster
+<!-- # Start K8s with KIND
+just setup-cluster -->
 
-# 3. Deploy to Kubernetes
-make deploy
+# Complete demo setup
+just demo
 
-# 4. Test concurrency with wrk
-make test-wrk
+# Test it
+just test
+
+# Check status  
+just status
+
+# Cleanup   ***Definitely run this at the end, to uninstall pip packages that were globally installed during `just demo`
+just cleanup-all
