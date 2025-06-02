@@ -1,14 +1,20 @@
+-- tests/wrk_scripts/mixed_load.lua
 -- Alternates between regression and classification requests
 wrk.method = "POST"
 wrk.headers["Content-Type"] = "application/json"
 
 local request_count = 0
-local regression_url = "http://localhost:30001/predict"
-local classification_url = "http://localhost:30002/predict"
+
+-- Use host.docker.internal for Docker environments, or get from environment
+local regression_url = os.getenv("REGRESSION_URL") or "http://host.docker.internal:30001/predict"
+local classification_url = os.getenv("CLASSIFICATION_URL") or "http://host.docker.internal:30002/predict"
 
 init = function(args)
     -- Initialize random seed
     math.randomseed(os.time())
+    print("Mixed load test initialized")
+    print("Regression URL:", regression_url)
+    print("Classification URL:", classification_url)
 end
 
 request = function()

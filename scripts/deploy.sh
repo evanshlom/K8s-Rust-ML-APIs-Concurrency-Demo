@@ -5,15 +5,15 @@ echo "Deploying to Kubernetes..."
 
 # Apply Kubernetes manifests
 echo "Creating namespace..."
-kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/namespace.yml
 
 echo "Deploying regression API..."
-kubectl apply -f k8s/regression-deployment.yaml
-kubectl apply -f k8s/regression-service.yaml
+kubectl apply -f k8s/regression-deployment.yml
+kubectl apply -f k8s/regression-service.yml
 
 echo "Deploying classification API..."
-kubectl apply -f k8s/classification-deployment.yaml
-kubectl apply -f k8s/classification-service.yaml
+kubectl apply -f k8s/classification-deployment.yml
+kubectl apply -f k8s/classification-service.yml
 
 # Wait for deployments to be ready
 echo "Waiting for deployments to be ready..."

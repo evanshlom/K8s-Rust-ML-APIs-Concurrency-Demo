@@ -26,10 +26,21 @@ deploy:
     @echo "Deploying to Kubernetes..."
     ./scripts/deploy.sh
 
-# Run wrk load tests on APIs
+# Run wrk load tests using Docker (cross-platform)
 test:
-    @echo "Running wrk load tests..."
-    ./tests/test_apis.sh
+    @echo "Running wrk load tests via Docker..."
+    ./tests/test_apis_docker.sh
+
+# Alternative: Run native wrk if available, fallback to Docker
+test-native:
+    #!/usr/bin/env sh
+    if command -v wrk >/dev/null 2>&1; then
+        echo "Using native wrk..."
+        ./tests/test_apis.sh
+    else
+        echo "wrk not found, using Docker fallback..."
+        just test
+    fi
 
 # Run unit tests
 test-unit:
