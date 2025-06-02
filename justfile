@@ -28,12 +28,26 @@ deploy:
 
 # Run wrk load tests using Docker (cross-platform)
 test:
-    @echo "Running wrk load tests via Docker..."
-    @echo "Checking API health..."
-    docker run --rm curlimages/curl:latest -s http://host.docker.internal:30001/health
-    docker run --rm curlimages/curl:latest -s http://host.docker.internal:30002/health
-    @echo "Running mixed concurrent load test..."
-    cat tests/wrk_scripts/mixed_load.lua | docker run --rm -i --add-host=host.docker.internal:host-gateway williamyeh/wrk -t4 -c20 -d60s -s /dev/stdin "http://host.docker.internal:30001/predict"
+    @echo "REGRESSION_MODEL | INFERENCE_ID: 001"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [1.5, -0.5, 2.0]}" http://host.docker.internal:30001/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"regression-api-[^-]*-\([a-z0-9]\).*/RISK_SCORE: \1 | POD: \U\2/'
+    @echo ""
+    @echo "CLASSIFICATION_MODEL | INFERENCE_ID: 002"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [0.5, 1.2, -0.8, 1.5]}" http://host.docker.internal:30002/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"classification-api-[^-]*-\([a-z0-9]\).*/RESULT: \1 | POD: \U\2/' | sed 's/RESULT: 0/RESULT: FRAUD_DETECTED/' | sed 's/RESULT: 1/RESULT: TRANSACTION_SAFE/'
+    @echo ""
+    @echo "REGRESSION_MODEL | INFERENCE_ID: 003"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [2.1, 0.3, -1.2]}" http://host.docker.internal:30001/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"regression-api-[^-]*-\([a-z0-9]\).*/RISK_SCORE: \1 | POD: \U\2/'
+    @echo ""
+    @echo "REGRESSION_MODEL | INFERENCE_ID: 004"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [0.8, -1.1, 1.9]}" http://host.docker.internal:30001/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"regression-api-[^-]*-\([a-z0-9]\).*/RISK_SCORE: \1 | POD: \U\2/'
+    @echo ""
+    @echo "REGRESSION_MODEL | INFERENCE_ID: 005"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [-0.3, 1.7, 0.4]}" http://host.docker.internal:30001/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"regression-api-[^-]*-\([a-z0-9]\).*/RISK_SCORE: \1 | POD: \U\2/'
+    @echo ""
+    @echo "CLASSIFICATION_MODEL | INFERENCE_ID: 006"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [-0.8, 2.1, 0.9, -1.3]}" http://host.docker.internal:30002/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"classification-api-[^-]*-\([a-z0-9]\).*/RESULT: \1 | POD: \U\2/' | sed 's/RESULT: 0/RESULT: FRAUD_DETECTED/' | sed 's/RESULT: 1/RESULT: TRANSACTION_SAFE/'
+    @echo ""
+    @echo "REGRESSION_MODEL | INFERENCE_ID: 007"
+    @docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl:latest -s -X POST -H "Content-Type: application/json" -d "{\"features\": [1.3, -0.4, 0.7]}" http://host.docker.internal:30001/predict | sed 's/.*"prediction":\([^,]*\).*"pod_id":"regression-api-[^-]*-\([a-z0-9]\).*/RISK_SCORE: \1 | POD: \U\2/'
 
 # Alternative: Run native wrk if available, fallback to Docker
 test-native:
