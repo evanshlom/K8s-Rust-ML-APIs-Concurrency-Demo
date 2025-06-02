@@ -29,7 +29,11 @@ deploy:
 # Run wrk load tests using Docker (cross-platform)
 test:
     @echo "Running wrk load tests via Docker..."
-    ./tests/test_apis_docker.sh
+    @echo "Checking API health..."
+    docker run --rm curlimages/curl:latest -s http://host.docker.internal:30001/health
+    docker run --rm curlimages/curl:latest -s http://host.docker.internal:30002/health
+    @echo "Running mixed concurrent load test..."
+    cat tests/wrk_scripts/mixed_load.lua | docker run --rm -i --add-host=host.docker.internal:host-gateway williamyeh/wrk -t4 -c20 -d60s -s /dev/stdin "http://host.docker.internal:30001/predict"
 
 # Alternative: Run native wrk if available, fallback to Docker
 test-native:
