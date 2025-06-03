@@ -6,7 +6,7 @@ metadata:
   labels:
     app: classification-api
 spec:
-  replicas: 1
+  replicas: 1  # 1 pods
   selector:
     matchLabels:
       app: classification-api
